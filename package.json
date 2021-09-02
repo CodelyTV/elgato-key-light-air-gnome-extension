@@ -1,0 +1,15 @@
+{
+  "name": "gnome-shell-extension-hello-world",
+  "version": "1.0.0",
+  "description": "",
+  "main": "extension.js",
+  "dependencies": {},
+  "devDependencies": {
+    "gnome-shell-extension-types": "0.0.1"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC"
+}
