@@ -1,7 +1,7 @@
 {
-  "name": "Hello World",
-  "description": "Hello World",
-  "uuid": "helloworld@codely.tv",
+  "name": "Elgato Key Light Air",
+  "description": "Elgato Key Light Air integration",
+  "uuid": "elgato-key-light-air@codely.tv",
   "shell-version": [
     "3.36"
   ]

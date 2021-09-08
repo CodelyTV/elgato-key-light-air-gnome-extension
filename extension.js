@@ -8,9 +8,9 @@ const PopupMenu = imports.ui.popupMenu;
 const Soup = imports.gi.Soup;
 const Me = imports.misc.extensionUtils.getCurrentExtension();
 
-let myPopup;
+let extension;
 
-const MyPopup = GObject.registerClass(
+const ElGatoKeyLightAirExtension = GObject.registerClass(
     class MyPopup extends PanelMenu.Button {
 
         _init () {
@@ -18,7 +18,6 @@ const MyPopup = GObject.registerClass(
             super._init(0);
 
             this.soupSession = new Soup.Session();
-
             let icon = new St.Icon({
                 //icon_name : 'security-low-symbolic',
                 gicon : Gio.icon_new_for_string( Me.dir.get_path() + '/icon.svg' ),
@@ -98,11 +97,11 @@ function init() {
 }
 
 function enable() {
-    myPopup = new MyPopup();
-    Main.panel.addToStatusArea('myPopup', myPopup, 1);
+    extension = new ElGatoKeyLightAirExtension();
+    Main.panel.addToStatusArea('extension', extension, 1);
 }
 
 function disable() {
-    myPopup.destroy();
+    extension.destroy();
 }
 
