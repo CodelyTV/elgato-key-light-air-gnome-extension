@@ -3,6 +3,6 @@
   "description": "Elgato Key Light Air integration",
   "uuid": "elgato-key-light-air@codely.tv",
   "shell-version": [
-    "3.36"
+    "40.4"
   ]
 }

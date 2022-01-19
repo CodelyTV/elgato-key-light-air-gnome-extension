@@ -10,11 +10,15 @@ const Me = imports.misc.extensionUtils.getCurrentExtension();
 
 let extension;
 
+var lights = [
+    "192.168.1.155:9123",
+    "192.168.1.156:9123",
+]
+
 const ElGatoKeyLightAirExtension = GObject.registerClass(
     class MyPopup extends PanelMenu.Button {
 
         _init () {
-
             super._init(0);
 
             this.soupSession = new Soup.Session();
@@ -26,29 +30,34 @@ const ElGatoKeyLightAirExtension = GObject.registerClass(
 
             this.add_child(icon);
 
-            let pmBrightnessSlider = new PopupMenu.PopupMenuItem('Brightness');
-            this.brightnessSlider = new Slider.Slider(0);
-            this._brightnessSliderChangedId = this.brightnessSlider.connect('notify::value', this.brightnessSliderChanged.bind(this));
-            this.brightnessSlider.accessible_name = _('Brightness');
-            pmBrightnessSlider.add_child(this.brightnessSlider)
-            this.menu.addMenuItem(pmBrightnessSlider)
+            this.brightnessSlider = [];
+            this.temperatureSlider = [];
+            
+           for (let index in lights) {
+                let pmBrightnessSlider = new PopupMenu.PopupMenuItem('Brightness');
+                this.brightnessSlider[index] = new Slider.Slider(0);
+                this.brightnessSlider[index].connect('notify::value', this.brightnessSliderChanged.bind(this, index));
+                this.brightnessSlider[index].accessible_name = _('Brightness');
+                pmBrightnessSlider.add_child(this.brightnessSlider[index])
+                this.menu.addMenuItem(pmBrightnessSlider)
 
-            let pmTemperatureSlider = new PopupMenu.PopupMenuItem('Temperature');
-            this.temperatureSlider = new Slider.Slider(0);
-            this._temperatureSliderChangedId = this.temperatureSlider.connect('notify::value', this.temperatureSliderChanged.bind(this));
-            this.temperatureSlider.accessible_name = _('Temperature');
-            pmTemperatureSlider.add_child(this.temperatureSlider)
-            this.menu.addMenuItem(pmTemperatureSlider)
+                let pmTemperatureSlider = new PopupMenu.PopupMenuItem('Temperature');
+                this.temperatureSlider[index] = new Slider.Slider(0);
+                this.temperatureSlider[index].connect('notify::value', this.temperatureSliderChanged.bind(this, index));
+                this.temperatureSlider[index].accessible_name = _('Temperature');
+                pmTemperatureSlider.add_child(this.temperatureSlider[index])
+                this.menu.addMenuItem(pmTemperatureSlider)
 
+                this.menu.addMenuItem( new PopupMenu.PopupSeparatorMenuItem() );
+            }
 
-            this.menu.addMenuItem( new PopupMenu.PopupSeparatorMenuItem() );
         }
 
-        brightnessSliderChanged () {
-            log(this.brightnessSlider.value);
-            let brightness = parseInt(this.brightnessSlider.value * 100)
+        brightnessSliderChanged(index) {
+            const light = lights[index]
+            let brightness = parseInt(this.brightnessSlider[index].value * 100)
             //let soupSyncSession = new Soup.SessionSync();
-            let url = "http://192.168.1.156:9123/elgato/lights"
+            let url = `http://${light}/elgato/lights`
             let body = `{
                 "numberOfLights": 1,
                 "lights": [
@@ -57,6 +66,8 @@ const ElGatoKeyLightAirExtension = GObject.registerClass(
                     }
                 ]
             }`
+            log(url)
+            log(body)
             let message = Soup.Message.new('PUT', url);
             message.set_request('application/json', 2, body);
             this.soupSession.queue_message(message, function (_httpSession, message){
@@ -66,14 +77,14 @@ const ElGatoKeyLightAirExtension = GObject.registerClass(
             //let responseCode = soupSession.send_message(message);
         }
 
-        temperatureSliderChanged () {
-            log(this.temperatureSlider.value);
+        temperatureSliderChanged(index) {
+            const light = lights[index]
             const minTemperature = 143;
             const maxTemperature = 319;
             const range = maxTemperature - minTemperature;
-            const temperature = minTemperature + range * this.temperatureSlider.value
+            const temperature = minTemperature + range * this.temperatureSlider[index].value
 
-            let url = "http://192.168.1.156:9123/elgato/lights"
+            let url = `http://${light}/elgato/lights`
             let body = `{
                 "numberOfLights": 1,
                 "lights": [
@@ -82,6 +93,8 @@ const ElGatoKeyLightAirExtension = GObject.registerClass(
                     }
                 ]
             }`
+            log(url)
+            log(body)
             let message = Soup.Message.new('PUT', url);
             message.set_request('application/json', 2, body);
             this.soupSession.queue_message(message, function (_httpSession, message){
