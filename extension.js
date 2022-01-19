@@ -49,21 +49,25 @@ const ElGatoKeyLightAirExtension = GObject.registerClass(
             this.temperatureSlider = [];
             
            for (let index in lights) {
-                let pmBrightnessSlider = new PopupMenu.PopupMenuItem('Brightness');
-                this.brightnessSlider[index] = new Slider.Slider(0);
-                this.brightnessSlider[index].connect('notify::value', this.brightnessSliderChanged.bind(this, index));
-                this.brightnessSlider[index].accessible_name = _('Brightness');
-                pmBrightnessSlider.add_child(this.brightnessSlider[index])
-                this.menu.addMenuItem(pmBrightnessSlider)
+               let pmBrightnessSlider = new PopupMenu.PopupMenuItem('Brightness');
+               this.brightnessSlider[index] = new Slider.Slider(0);
+               this.brightnessSlider[index].connect('notify::value', this.brightnessSliderChanged.bind(this, index));
+               this.brightnessSlider[index].accessible_name = _('Brightness');
+               pmBrightnessSlider.add_child(this.brightnessSlider[index])
+               this.menu.addMenuItem(pmBrightnessSlider)
 
-                let pmTemperatureSlider = new PopupMenu.PopupMenuItem('Temperature');
-                this.temperatureSlider[index] = new Slider.Slider(0);
-                this.temperatureSlider[index].connect('notify::value', this.temperatureSliderChanged.bind(this, index));
-                this.temperatureSlider[index].accessible_name = _('Temperature');
-                pmTemperatureSlider.add_child(this.temperatureSlider[index])
-                this.menu.addMenuItem(pmTemperatureSlider)
+               this.setCurrentBrightnessSlider(index)
 
-                this.menu.addMenuItem( new PopupMenu.PopupSeparatorMenuItem() );
+               let pmTemperatureSlider = new PopupMenu.PopupMenuItem('Temperature');
+               this.temperatureSlider[index] = new Slider.Slider(0);
+               this.temperatureSlider[index].connect('notify::value', this.temperatureSliderChanged.bind(this, index));
+               this.temperatureSlider[index].accessible_name = _('Temperature');
+               pmTemperatureSlider.add_child(this.temperatureSlider[index])
+               this.menu.addMenuItem(pmTemperatureSlider)
+
+               this.setCurrentTemperatureSlider(index)
+
+               this.menu.addMenuItem( new PopupMenu.PopupSeparatorMenuItem() );
             }
 
         }
@@ -93,6 +97,20 @@ const ElGatoKeyLightAirExtension = GObject.registerClass(
             });
         }
 
+        setCurrentBrightnessSlider(index) {
+            const light = lights[index]
+            let url = `http://${light}/elgato/lights`
+            let message = Soup.Message.new('GET', url);
+
+            const self = this;
+            this.soupSession.queue_message(message, function (_httpSession, message){
+                global.log(message.response_body.data)
+                const response = JSON.parse(message.response_body.data)
+                const currentBrightness = response.lights[0].brightness
+                self.brightnessSlider[index].value = currentBrightness / 100
+            });
+        }
+
         temperatureSliderChanged(index) {
             const light = lights[index]
             const minTemperature = 143;
@@ -118,6 +136,23 @@ const ElGatoKeyLightAirExtension = GObject.registerClass(
             message.set_request('application/json', 2, body);
             this.soupSession.queue_message(message, function (_httpSession, message){
                 global.log(message.response_body.data)
+            });
+        }
+
+        setCurrentTemperatureSlider(index) {
+            const light = lights[index]
+            let url = `http://${light}/elgato/lights`
+            let message = Soup.Message.new('GET', url);
+
+            const self = this;
+            this.soupSession.queue_message(message, function (_httpSession, message){
+                global.log(message.response_body.data)
+                const response = JSON.parse(message.response_body.data)
+                const currentTemperature = response.lights[0].temperature
+                const minTemperature = 143;
+                const maxTemperature = 319;
+                const range = maxTemperature - minTemperature;
+                self.temperatureSlider[index].value = (currentTemperature - minTemperature) / range
             });
         }
 
