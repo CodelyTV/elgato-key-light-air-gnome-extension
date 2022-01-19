@@ -7,13 +7,28 @@ const PanelMenu = imports.ui.panelMenu;
 const PopupMenu = imports.ui.popupMenu;
 const Soup = imports.gi.Soup;
 const Me = imports.misc.extensionUtils.getCurrentExtension();
+const Mainloop = imports.mainloop;
 
 let extension;
 
-var lights = [
+const lights = [
     "192.168.1.155:9123",
     "192.168.1.156:9123",
 ]
+
+let throttlePause;
+
+const throttle = (callback, time) => {
+    if (throttlePause) return;
+
+    throttlePause = true;
+
+    Mainloop.timeout_add(time, () => {
+        callback();
+
+        throttlePause = false;
+    })
+}
 
 const ElGatoKeyLightAirExtension = GObject.registerClass(
     class MyPopup extends PanelMenu.Button {
@@ -56,7 +71,10 @@ const ElGatoKeyLightAirExtension = GObject.registerClass(
         brightnessSliderChanged(index) {
             const light = lights[index]
             let brightness = parseInt(this.brightnessSlider[index].value * 100)
-            //let soupSyncSession = new Soup.SessionSync();
+            throttle(this.changeBrightness.bind(this, light, brightness), 100)
+        }
+
+        changeBrightness(light, brightness) {
             let url = `http://${light}/elgato/lights`
             let body = `{
                 "numberOfLights": 1,
@@ -71,10 +89,8 @@ const ElGatoKeyLightAirExtension = GObject.registerClass(
             let message = Soup.Message.new('PUT', url);
             message.set_request('application/json', 2, body);
             this.soupSession.queue_message(message, function (_httpSession, message){
-                //log res
                 global.log(message.response_body.data)
             });
-            //let responseCode = soupSession.send_message(message);
         }
 
         temperatureSliderChanged(index) {
@@ -83,7 +99,10 @@ const ElGatoKeyLightAirExtension = GObject.registerClass(
             const maxTemperature = 319;
             const range = maxTemperature - minTemperature;
             const temperature = minTemperature + range * this.temperatureSlider[index].value
+            throttle(this.changeTemperature.bind(this, light, temperature), 100)
+        }
 
+        changeTemperature(light, temperature) {
             let url = `http://${light}/elgato/lights`
             let body = `{
                 "numberOfLights": 1,
@@ -98,10 +117,8 @@ const ElGatoKeyLightAirExtension = GObject.registerClass(
             let message = Soup.Message.new('PUT', url);
             message.set_request('application/json', 2, body);
             this.soupSession.queue_message(message, function (_httpSession, message){
-                //log res
                 global.log(message.response_body.data)
             });
-            //let responseCode = soupSession.send_message(message);
         }
 
     });
